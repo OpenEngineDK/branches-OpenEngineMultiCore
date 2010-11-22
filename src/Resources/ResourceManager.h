@@ -21,6 +21,7 @@
 #include <map>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <Core/Mutex.h>
 
 namespace OpenEngine {
 namespace Resources {
@@ -38,6 +39,7 @@ class ResourceManager {
 private:
     static vector<IResourcePlugin<T>*> plugins;
     static map<string,  boost::shared_ptr<T> > resources;
+	Openengine::Core::Mutex plugin;
 
 public:
 
@@ -46,8 +48,11 @@ public:
  *
  * @param plugin a resource plug-in
  */
-static void AddPlugin(IResourcePlugin<T>* plugin) {
-  plugins.push_back(plugin);
+static void AddPlugin(IResourcePlugin<T>* plugin)
+{
+	plugin.Lock();
+	plugins.push_back(plugin);
+	plugin.Unlock();
 }
   
 
@@ -58,10 +63,12 @@ static void AddPlugin(IResourcePlugin<T>* plugin) {
  * @return pointer to a resource
  * @throws ResourceException if the file format is unsupported or the file does not exist
  */
-  static boost::shared_ptr<T> Create(const string filename) {
+  static boost::shared_ptr<T> Create(const string filename)
+  {
   // get the file extension
   string ext = Convert::ToLower(File::Extension(filename));
 
+  plugin.Lock();
   typename vector< IResourcePlugin<T>* >::iterator plugin;
   for (plugin = plugins.begin(); plugin != plugins.end() ; plugin++) {
     if ((*plugin)->AcceptsExtension(ext)) {
@@ -76,7 +83,7 @@ static void AddPlugin(IResourcePlugin<T>* plugin) {
     return resource;
   } else
     logger.warning << "Plugin for ." << ext << " not found." << logger.end;
-
+  plugin.Unlock();
   throw ResourceException("Unsupported file format: " + filename);
 }
 
