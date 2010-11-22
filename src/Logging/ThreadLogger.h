@@ -1,4 +1,4 @@
-// Generic stream logger.
+// Generic thread stream logger.
 // -------------------------------------------------------------------
 // Copyright (C) 2007 OpenEngine.dk (See AUTHORS)
 //
@@ -7,19 +7,104 @@
 // See the GNU General Public License for more details (see LICENSE).
 // --------------------------------------------------------------------
 
-#ifndef _STREAM_LOGGER_H_
-#define _STREAM_LOGGER_H_
+#ifndef _THREAD_LOGGER_H_
+#define _THREAD_LOGGER_H_
 
 #include <Logging/ILogger.h>
+#include <Core/Thread.h>
+#include <Core/Semaphore.h>
+#include <Meta/Time.h>
+#include <Utils/DateTime.h>
 
 #include <string>
 #include <ostream>
+#include <cstdio>
 
 namespace OpenEngine {
 namespace Logging {
 
 using std::ostream;
 using std::string;
+using OpenEngine::Core::Semaphore;
+using OpenEngine::Core::Thread;
+
+struct LogLine
+{
+	LoggerType type;
+	string msg;
+};
+
+template<int BufferSize, typename T>
+class AgentClientSystem
+{
+	public:
+		LogLine T[BufferSize];
+		Semaphore agent;
+		unsigned int agentpos;
+		Semaphore client;
+		unsigned int clientpos;
+	
+		AgentClientSys()
+			: agent(BufferSize), client(0)
+		{
+		}
+};
+
+template<int BufferSize, typename T>
+class WriterThread : public Thread
+{
+    ostream* stream;
+	AgentClientSystem<BufferSize, T>* asys;
+	
+	public:
+	WriterThread(ostream* stream, AgentClientSystem<BufferSize, T>* asys)
+		: stream(stream), asys(asys)
+	{
+	}
+
+	~WriterThread()
+	{
+		if (stream!=NULL)
+		{
+        	stream->flush();
+        	delete stream;
+    	}
+	}
+
+	void Run()
+	{
+		while(1)
+		{
+			asys->client.Wait();
+   			*stream << TypeToString(asys->Data[asys->clientpos].type) << " ";
+    		*stream << Utils::DateTime::GetCurrent() << ": ";
+    		*stream << asys->Data[asys->clientpos].msg << std::endl;
+			asys->clientpos++;
+			if(asys->clientpos==BufferSize)
+				asys->clientpos=0;
+			asys->agent.Post();
+		}
+	}
+
+	string TypeToString(LoggerType type)
+	{
+    	string str;
+    	if (type == Error)
+        	str ="[EE]";
+    	else if (type == Warning)
+        	str = "[WW]";
+    	else if (type == Info)
+        	str = "[II]";
+    	else
+		{
+        	str = "[";
+        	str += type;
+        	str += "]";
+    	}
+    	return str;
+	}
+};
+
 
 /**
  * Generic stream logger.
@@ -27,17 +112,34 @@ using std::string;
  *
  * @class StreamLogger StreamLogger.h Logging/StreamLogger.h
  */
-class StreamLogger : public ILogger {
+template<int BufferSize=10, typename T=LogLine>
+class ThreadLogger : public ILogger
+{
 private:
-    ostream* stream;
+	WriterThread<BufferSize, T> Writer;
+	AgentClientSystem<BufferSize, T> asys;
 public:
-    StreamLogger(ostream* stream);
-    virtual ~StreamLogger();
-    void Write(LoggerType, string);
-    std::string TypeToString(LoggerType);
+    ThreadLogger(ostream* stream)
+	: Writer(stream, &asys)
+	{
+		Writer.Start();
+	}
+
+	virtual ~ThreadLogger(){}
+
+    void Write(LoggerType type, string msg)
+	{
+		asys.agent.Wait();
+		asys.Data[asys.agentpos].type = type;
+		asys.Data[asys.agentpos].msg = msg;
+		asys.agentpos++;
+		if(asys.agentpos==BufferSize)
+			asys.agentpos=0;
+		asys.client.Post();
+	}
 };
 
 } //NS Logger
 } //NS OpenEngine
 
-#endif // _STREAM_LOGGER_H_
+#endif // _THREAD_LOGGER_H_
