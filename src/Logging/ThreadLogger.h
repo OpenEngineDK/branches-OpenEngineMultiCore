@@ -37,13 +37,13 @@ template<int BufferSize, typename T>
 class AgentClientSystem
 {
 	public:
-		LogLine T[BufferSize];
+		T Data[BufferSize];
 		Semaphore agent;
 		unsigned int agentpos;
 		Semaphore client;
 		unsigned int clientpos;
 	
-		AgentClientSys()
+		AgentClientSystem()
 			: agent(BufferSize), client(0)
 		{
 		}
