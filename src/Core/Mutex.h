@@ -13,10 +13,18 @@ private:
     pthread_mutex_t _mutex;
 
 public:
-    Mutex();
-    ~Mutex();
-    void Lock();
-    void Unlock();
+    Mutex() {
+        pthread_mutex_init(&_mutex,NULL);
+    }
+    ~Mutex() {
+        pthread_mutex_init(&_mutex,NULL);
+    }
+    void Lock() {
+        pthread_mutex_lock(&_mutex);
+    }
+    void Unlock() {
+        pthread_mutex_unlock(&_mutex);
+    }
 };
 
     }
