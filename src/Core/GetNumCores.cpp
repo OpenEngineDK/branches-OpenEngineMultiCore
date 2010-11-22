@@ -44,11 +44,3 @@ int GetNumCores()
 	#endif
 	return numCPU;
 }
-
-#include <iostream>
-using namespace std;
-int main()
-{
-	cout << GetNumCores() << endl;
-	return 0;
-}
