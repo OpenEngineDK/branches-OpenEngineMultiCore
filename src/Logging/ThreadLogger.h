@@ -12,7 +12,7 @@
 
 #include <Logging/ILogger.h>
 #include <Core/Thread.h>
-#include <Core/Semaphore.h>
+#include <Core/AgentClientSystem.h>
 #include <Meta/Time.h>
 #include <Utils/DateTime.h>
 
@@ -24,29 +24,13 @@ namespace Logging {
 
 using std::ostream;
 using std::string;
-using OpenEngine::Core::Semaphore;
+using OpenEngine::Core::AgentClientSystem;
 using OpenEngine::Core::Thread;
 
 struct LogLine
 {
 	LoggerType type;
 	string msg;
-};
-
-template<int BufferSize, typename T>
-class AgentClientSystem
-{
-	public:
-		T Data[BufferSize];
-		Semaphore agent;
-		unsigned int agentpos;
-		Semaphore client;
-		unsigned int clientpos;
-	
-		AgentClientSystem()
-			: agent(BufferSize), client(0)
-		{
-		}
 };
 
 template<int BufferSize, typename T>

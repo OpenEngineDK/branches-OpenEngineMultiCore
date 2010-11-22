@@ -1,5 +1,6 @@
 ADD_LIBRARY(OpenEngine_Core
   Core.cpp
+  AgentClientSystem.h
   GetNumCores.h
   IEngine.h
   IEvent.h
