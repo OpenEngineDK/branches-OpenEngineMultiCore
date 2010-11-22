@@ -1,5 +1,7 @@
 ADD_LIBRARY(OpenEngine_Core
   Core.cpp
+  GetNumCores.cpp
+  GetNumCores.h
   IEngine.h
   IEvent.h
   IListener.h
