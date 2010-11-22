@@ -18,7 +18,6 @@
 
 #include <string>
 #include <ostream>
-#include <cstdio>
 
 namespace OpenEngine {
 namespace Logging {
