@@ -1,6 +1,5 @@
 ADD_LIBRARY(OpenEngine_Core
   Core.cpp
-  GetNumCores.cpp
   GetNumCores.h
   IEngine.h
   IEvent.h
@@ -18,7 +17,7 @@ ADD_LIBRARY(OpenEngine_Core
   Thread.h
   Thread.cpp
   Mutex.h
-  Mutex.cpp
+  Semaphore.h
 )
 
 IF(MINGW)
