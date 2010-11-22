@@ -12,6 +12,7 @@
 
 #include <Core/IEvent.h>
 #include <Core/IListener.h>
+#include <Core/Mutex.h>
 #include <list>
 
 namespace OpenEngine {
@@ -34,15 +35,22 @@ class Event : public IEvent<EventArg> {
 protected:
     //! list of listeners
     list<IListener<EventArg>*> ls;
+	Mutex container;
 
 public:
 
-    virtual void Attach(IListener<EventArg>& listener) {
+    virtual void Attach(IListener<EventArg>& listener)
+	{
+		container.Lock();
         ls.push_back(&listener);
+		container.Unlock();
     }
 
-    virtual void Detach(IListener<EventArg>& listener) {
+    virtual void Detach(IListener<EventArg>& listener)
+	{
+		container.Lock();
         ls.remove(&listener);
+		container.Unlock();
     }
     
     /**
@@ -50,15 +58,21 @@ public:
      * This will immediately invoke the Handle(EventArg) method on each
      * attached listener.
      */
-    virtual void Notify(EventArg arg) {
+    virtual void Notify(EventArg arg)
+	{
+		container.Lock();
         typename list<IListener<EventArg>*>::iterator itr;
         for (itr=ls.begin(); itr != ls.end(); itr++)
             (*itr)->Handle(arg);
+		container.Unlock();
     }
 
-    unsigned int Size() {
+    unsigned int Size()
+	{
+		container.Lock();
         return ls.size();
-    }
+		container.Unlock();
+	}
 
 };
 
