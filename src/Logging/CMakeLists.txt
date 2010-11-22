@@ -8,4 +8,6 @@ ADD_LIBRARY(OpenEngine_Logging
   StreamLogger.cpp
   ColorStreamLogger.h
   ColorStreamLogger.cpp
+  ThreadLogger.h
+  ThreadLogger.cpp
 )
